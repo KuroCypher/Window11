@@ -1,0 +1,2003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Windows 11 Installation Lab</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:"Segoe UI",Arial,sans-serif;user-select:none}
+button,input,select{font:inherit}
+button{cursor:pointer;touch-action:manipulation}
+.screen{position:fixed;inset:0;display:none}
+.screen.active{display:flex}
+
+/* PHONE ROTATION */
+#rotateScreen{
+    display:none;position:fixed;inset:0;z-index:99999;background:#050505;
+    color:#fff;align-items:center;justify-content:center;text-align:center;padding:30px
+}
+.rotate-icon{font-size:64px;margin-bottom:20px;animation:rotatePhone 2s infinite}
+@keyframes rotatePhone{50%{transform:rotate(90deg)}}
+.rotate-box h2{font-weight:400;margin-bottom:10px}
+.rotate-box p{color:#999;font-size:14px}
+@media(pointer:coarse) and (orientation:portrait){#rotateScreen{display:flex}}
+
+/* DESKTOP */
+.desktop-bg{
+    background:
+    radial-gradient(circle at 65% 35%,rgba(70,145,255,.42),transparent 28%),
+    linear-gradient(135deg,#061c43,#071326 55%,#020813);
+}
+#desktop{align-items:center;justify-content:center}
+.desktop-icons{
+    position:absolute;top:18px;left:16px;display:flex;flex-direction:column;gap:18px
+}
+.desktop-icon{
+    width:82px;color:#fff;text-align:center;font-size:12px;
+    padding:5px;border:1px solid transparent
+}
+.desktop-icon:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.2)}
+.desktop-icon .icon{font-size:35px;margin-bottom:5px}
+
+.taskbar{
+    position:absolute;bottom:0;left:0;right:0;height:48px;
+    background:rgba(18,25,38,.91);backdrop-filter:blur(20px);
+    display:flex;justify-content:center;align-items:center;gap:5px;
+    border-top:1px solid rgba(255,255,255,.08);z-index:50
+}
+.task-icon{
+    width:38px;height:38px;display:flex;align-items:center;
+    justify-content:center;color:#fff;font-size:18px;border-radius:5px
+}
+.win-logo,.mini-logo,.boot-logo,.oobe-logo{
+    display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px
+}
+.win-logo{width:19px;height:19px}
+.win-logo span,.mini-logo span,.boot-logo span{background:#fff}
+.clock{position:absolute;right:15px;color:#fff;font-size:10px;text-align:right;line-height:1.5}
+
+/* RUFUS */
+.rufus{
+    width:min(500px,88vw);max-height:calc(100vh - 62px);overflow:auto;
+    background:#f3f3f3;color:#111;border:1px solid #777;
+    box-shadow:0 20px 70px rgba(0,0,0,.65)
+}
+.titlebar{
+    height:34px;background:#fff;display:flex;align-items:center;
+    justify-content:space-between;padding-left:11px;font-size:12px
+}
+.window-buttons{display:flex;height:100%}
+.window-buttons span{width:44px;display:flex;align-items:center;justify-content:center}
+.rufus-body{padding:15px}
+.rufus-heading{display:flex;align-items:center;gap:12px;margin-bottom:15px}
+.usb-symbol{
+    width:42px;height:42px;border-radius:5px;background:#222;color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:22px
+}
+.rufus-heading h2{font-size:18px;font-weight:500}
+.row{margin-bottom:12px}
+.row label{display:block;font-size:12px;margin-bottom:5px}
+.control{display:flex;gap:7px}
+.rufus select,.rufus input{
+    width:100%;min-width:0;height:31px;background:#fff;color:#111;
+    border:1px solid #999;padding:0 8px;font-size:12px
+}
+.select-button{height:31px;padding:0 17px;border:1px solid #777;background:#e6e6e6}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.status-area{border-top:1px solid #ccc;padding-top:12px;margin-top:15px}
+.status-label{font-size:11px;margin-bottom:6px}
+.progress{height:22px;background:#fff;border:1px solid #999;position:relative;overflow:hidden}
+.progress-bar{position:absolute;inset:0 auto 0 0;width:0;background:#36a852}
+.progress-text{position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;font-size:11px}
+.rufus-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:13px}
+.rufus-actions button{min-width:90px;height:31px;border:1px solid #888}
+.start-button{background:#0078d4;color:#fff;border-color:#0067b8!important}
+
+/* WINDOWS FILE PICKER */
+.file-picker-overlay{
+    position:fixed;inset:0;z-index:10000;display:none;align-items:center;
+    justify-content:center;background:rgba(0,0,0,.55)
+}
+.file-picker-overlay.show{display:flex}
+.file-picker-window{
+    width:min(780px,94vw);height:min(530px,88vh);background:#f5f5f5;
+    color:#111;border:1px solid #777;box-shadow:0 25px 80px rgba(0,0,0,.75);
+    display:flex;flex-direction:column
+}
+.file-picker-titlebar{
+    height:38px;background:#fff;display:flex;align-items:center;
+    justify-content:space-between;padding-left:14px;font-size:13px
+}
+.file-picker-titlebar button{width:45px;height:38px;border:0;background:#fff;font-size:20px}
+.file-picker-address{height:45px;display:flex;gap:8px;align-items:center;padding:6px 10px;border-block:1px solid #ccc}
+.file-picker-address button{width:35px;height:30px;border:0;background:transparent}
+#folderPath{flex:1;height:30px;display:flex;align-items:center;padding:0 10px;background:#fff;border:1px solid #aaa;font-size:12px}
+.file-picker-main{flex:1;min-height:0;display:flex}
+.file-picker-sidebar{width:165px;background:#eee;border-right:1px solid #ccc;padding:8px}
+.file-picker-sidebar div{padding:10px;font-size:12px;cursor:pointer}
+.file-picker-sidebar div:hover{background:#d8e9f8}
+.file-picker-files{
+    flex:1;overflow:auto;padding:15px;background:#fff;display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(120px,1fr));align-content:start;gap:10px
+}
+.file-item{min-height:105px;padding:10px 6px;text-align:center;border:1px solid transparent;cursor:pointer;font-size:11px}
+.file-item:hover{background:#e5f3ff;border-color:#99d1ff}
+.file-item.selected{background:#cce8ff;border-color:#66b8f5}
+.file-icon{font-size:43px;margin-bottom:8px}
+.file-size{color:#777;margin-top:4px}
+.file-picker-bottom{
+    min-height:95px;border-top:1px solid #ccc;padding:10px;display:grid;
+    grid-template-columns:1fr 160px 80px 80px;gap:8px;align-items:end
+}
+.file-name-area label{display:block;font-size:11px;margin-bottom:4px}
+.file-name-area input,.file-picker-bottom select{width:100%;height:34px;border:1px solid #999;padding:0 8px}
+.file-picker-bottom button{height:34px;border:1px solid #888;background:#eee}
+.file-open-button{background:#0078d4!important;color:#fff}
+
+/* CONTEXT MENU */
+.context-menu{
+    position:fixed;z-index:9000;display:none;width:190px;background:#f8f8f8;
+    color:#111;border:1px solid #aaa;box-shadow:0 8px 25px rgba(0,0,0,.4);padding:4px
+}
+.context-menu.show{display:block}
+.context-item{padding:8px 12px;font-size:12px;cursor:pointer}
+.context-item:hover{background:#0078d4;color:#fff}
+.context-separator{height:1px;background:#ddd;margin:4px}
+
+/* COMPUTER MANAGEMENT */
+#computerManagement{
+    position:fixed;inset:4% 4% 55px;z-index:2000;display:none;
+    background:#f3f3f3;color:#111;border:1px solid #777;
+    box-shadow:0 20px 80px rgba(0,0,0,.7)
+}
+#computerManagement.show{display:flex;flex-direction:column}
+.cm-titlebar{
+    height:36px;background:#fff;display:flex;align-items:center;
+    justify-content:space-between;padding-left:12px;font-size:12px
+}
+.cm-close{width:48px;height:36px;border:0;background:#fff;font-size:18px}
+.cm-close:hover{background:#e81123;color:#fff}
+.cm-menu{height:28px;background:#fafafa;border-block:1px solid #ddd;padding:5px 10px;font-size:12px;word-spacing:18px}
+.cm-main{flex:1;min-height:0;display:grid;grid-template-columns:220px 1fr}
+.cm-tree{background:#fafafa;border-right:1px solid #bbb;padding:10px;overflow:auto}
+.tree-title{font-weight:600;font-size:13px;margin-bottom:8px}
+.tree-item{padding:7px 8px;font-size:12px;cursor:pointer}
+.tree-child{padding-left:26px}
+.tree-item.active{background:#dbeaf7}
+.cm-content{display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.cm-heading{padding:10px 14px;font-size:16px;background:#fff;border-bottom:1px solid #ccc}
+.disk-list{flex:1;overflow:auto;padding:12px;background:#fff}
+.disk-row{
+    display:grid;grid-template-columns:150px 1fr;min-height:115px;
+    border-bottom:1px solid #ccc;padding:10px 0
+}
+.disk-label{font-size:12px;padding:10px}
+.disk-label strong{display:block;font-size:13px;margin-bottom:5px}
+.disk-visual{display:flex;align-items:stretch;min-width:0;overflow-x:auto}
+.volume-block{
+    min-width:90px;border:1px solid #555;border-top:7px solid #0866c6;
+    background:#fff;padding:7px;font-size:10px;cursor:pointer;overflow:hidden
+}
+.volume-block.unallocated{border-top-color:#111;background:#f5f5f5}
+.volume-block.selected{outline:3px solid #ffb900;outline-offset:-3px}
+.volume-name{font-weight:600;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cm-status{height:30px;border-top:1px solid #bbb;padding:7px 12px;font-size:11px;background:#f5f5f5}
+
+/* POWER + POST */
+#powerOff,#post,#windowsBoot,#restart{background:#000;color:#fff;align-items:center;justify-content:center}
+.power-button{width:90px;height:90px;border-radius:50%;border:2px solid #555;background:#080808;color:#aaa;font-size:38px}
+.power-text{position:absolute;top:calc(50% + 75px);color:#666;font-size:13px}
+.vendor{text-align:center;margin-top:-50px}
+.vendor-logo{font-size:clamp(40px,8vw,70px);font-weight:300;letter-spacing:12px}
+.vendor-model{color:#888;margin-top:10px;font-size:11px;letter-spacing:3px}
+.post-help{position:absolute;left:30px;bottom:25px;color:#aaa;font-size:12px}
+.post-help b{color:#fff}
+.post-status{position:absolute;right:30px;bottom:25px;color:#666;font-size:11px}
+.mobile-post-controls{display:none;position:absolute;left:50%;bottom:55px;transform:translateX(-50%);gap:15px}
+.mobile-post-controls button{width:145px;height:58px;background:#101010;color:#fff;border:1px solid #777}
+.mobile-post-controls small{display:block;color:#999;font-size:10px;margin-top:4px}
+
+/* BOOT MENU */
+#bootMenu{background:#070707;color:#ddd;align-items:center;justify-content:center}
+.boot-box{width:min(620px,90vw);background:#111;border:1px solid #666}
+.boot-title{padding:13px 18px;background:#1c1c1c;color:#fff;border-bottom:1px solid #555;font-size:17px}
+.boot-subtitle{padding:17px 20px 8px;color:#aaa;font-size:13px}
+.boot-list{margin:10px 20px;border:1px solid #333}
+.boot-option{min-height:50px;display:flex;align-items:center;padding:10px 15px;font-size:14px}
+.boot-option.selected{background:#ddd;color:#000}
+.boot-footer{padding:15px 20px;color:#888;font-size:11px;line-height:1.7}
+.mobile-boot-controls{display:none;padding:0 20px 18px;gap:8px}
+.mobile-boot-controls button{flex:1;min-height:43px;background:#222;color:#fff;border:1px solid #666}
+.mobile-boot-controls .boot-now{background:#ddd;color:#000}
+
+/* BIOS */
+#bios{background:#071c36;color:#fff;flex-direction:column}
+.bios-top{height:55px;background:#0c315a;border-bottom:2px solid #4c83b7;display:flex;align-items:center;padding:0 25px;font-size:20px}
+.bios-tabs{height:40px;background:#082746;display:flex;border-bottom:1px solid #52779a}
+.bios-tabs span{padding:11px 22px;font-size:12px}
+.bios-tabs .active{background:#d7e8f7;color:#071c36}
+.bios-content{flex:1;display:grid;grid-template-columns:1fr 280px;gap:18px;padding:20px}
+.bios-panel,.bios-help{border:1px solid #6583a0}
+.bios-row{display:grid;grid-template-columns:220px 1fr;padding:10px 14px;font-size:12px}
+.bios-row:nth-child(odd){background:rgba(255,255,255,.04)}
+.bios-help{padding:18px;font-size:12px;line-height:1.7}
+.bios-exit{height:48px;background:#082746;display:flex;align-items:center;justify-content:center}
+.bios-exit button{padding:8px 25px;background:#d7e8f7;color:#071c36;border:0}
+
+/* BOOT LOGO */
+#windowsBoot{flex-direction:column}
+.boot-logo{width:76px;height:76px;gap:4px}
+.spinner{
+    margin-top:65px;width:30px;height:30px;border:3px solid transparent;
+    border-top-color:#fff;border-right-color:#fff;border-radius:50%;
+    animation:spin 1s linear infinite
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* WINDOWS SETUP */
+.setup-screen{background:#180052;color:#fff;align-items:center;justify-content:center}
+.setup-window{width:100%;height:100%;display:flex;flex-direction:column}
+.setup-content{width:min(760px,88vw);margin:auto}
+.setup-brand{display:flex;align-items:center;gap:10px;font-size:20px;margin-bottom:40px}
+.mini-logo{width:28px;height:28px}
+.setup-content h1{font-size:30px;font-weight:400;margin-bottom:15px}
+.description{color:#ddd;font-size:14px;line-height:1.6;margin-bottom:30px}
+.setup-field{display:grid;grid-template-columns:220px 1fr;align-items:center;margin-bottom:14px;font-size:13px}
+.setup-field select{height:36px;padding:0 8px}
+.setup-footer{
+    min-height:68px;border-top:1px solid rgba(255,255,255,.25);
+    display:flex;align-items:center;justify-content:flex-end;padding:10px 50px
+}
+.win-button{min-width:105px;min-height:38px;background:#180052;color:#fff;border:2px solid #fff}
+.install-center{text-align:center}
+.install-now-button{padding:13px 30px;background:#eee;color:#111;border:2px solid #fff;margin-top:20px}
+.repair-text{margin-top:45px;color:#ccc;font-size:13px}
+.text-input{width:min(430px,100%);height:40px;padding:0 10px}
+.link-button{display:block;width:max-content;margin-top:28px;color:#9ccfff;font-size:14px;cursor:pointer}
+.edition-list{margin-top:20px;background:#fff;color:#111;border:1px solid #aaa}
+.edition{padding:12px 15px;border-bottom:1px solid #ddd;font-size:13px;cursor:pointer}
+.edition.selected{background:#0078d4;color:#fff}
+.install-option{border:1px solid rgba(255,255,255,.5);padding:18px;margin-top:14px;cursor:pointer}
+.install-option:hover{background:rgba(255,255,255,.1)}
+.install-option h3{font-size:16px;font-weight:400;margin-bottom:7px}
+.install-option p{color:#ccc;font-size:12px}
+
+/* SETUP DISK TABLE */
+.disk-screen-content{width:min(960px,94vw);margin:auto}
+.disk-title{font-size:27px;font-weight:400;margin-bottom:12px}
+.disk-description{color:#ddd;font-size:13px;margin-bottom:18px}
+.disk-table-wrapper{width:100%;max-height:300px;overflow:auto;background:#fff;border:1px solid #aaa}
+.disk-table{width:100%;min-width:700px;border-collapse:collapse;background:#fff;color:#111;font-size:12px}
+.disk-table th{position:sticky;top:0;text-align:left;padding:10px;background:#eee;border-bottom:1px solid #aaa}
+.disk-table td{padding:12px 10px;border-bottom:1px solid #ddd}
+.disk-table tbody tr{cursor:pointer}
+.disk-table tbody tr.selected{background:#0078d4;color:#fff}
+.disk-toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.disk-tool{min-width:95px;height:38px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.7)}
+.disk-info,.install-target{margin-top:11px;color:#ddd;font-size:12px}
+
+/* INSTALL PROGRESS */
+.install-progress-list{margin-top:30px}
+.install-stage{padding:9px 0;color:#aaa}
+.install-stage.active{color:#fff}
+.install-stage.done{color:#75d99c}
+.check{display:inline-block;width:28px}
+.install-percent{font-size:42px;font-weight:300;margin-top:25px}
+#restart{flex-direction:column}
+#restart h2{font-size:23px;font-weight:400}
+#restart p{color:#999;margin-top:15px}
+
+/* OOBE + FINAL */
+#oobe{background:#f4f7fb;color:#111;align-items:center;justify-content:center}
+.oobe-card{width:min(620px,90vw);text-align:center}
+.oobe-logo{width:44px;height:44px;margin:0 auto 35px}
+.oobe-logo span{background:#0078d4}
+.oobe-card h1{font-size:32px;font-weight:500}
+.oobe-card p{color:#555;margin-top:12px}
+.oobe-select{width:min(380px,90%);height:45px;margin-top:30px;padding:0 10px}
+.oobe-button{display:block;margin:25px auto 0;min-width:110px;padding:10px 25px;background:#0067c0;color:#fff;border:0}
+#finalDesktop{color:#fff}
+.final-message{
+    position:absolute;top:30px;left:120px;width:310px;padding:20px;
+    background:rgba(20,25,35,.82);backdrop-filter:blur(20px);border-radius:9px
+}
+.final-message p{color:#ccc;font-size:13px;line-height:1.5;margin-top:7px}
+
+/* MODAL */
+.modal{
+    position:fixed;inset:0;z-index:12000;display:none;align-items:center;
+    justify-content:center;background:rgba(0,0,0,.55)
+}
+.modal.show{display:flex}
+.modal-box{width:min(440px,90vw);background:#fff;color:#111;box-shadow:0 20px 80px rgba(0,0,0,.6)}
+.modal-title{padding:12px 15px;border-bottom:1px solid #ddd;font-size:14px}
+.modal-body{padding:20px;font-size:13px;line-height:1.6}
+.modal-body input{width:100%;height:38px;border:1px solid #888;padding:0 10px;margin-top:7px}
+.modal-note{color:#666;margin-top:10px;font-size:11px}
+.modal-actions{padding:12px 15px;background:#eee;display:flex;justify-content:flex-end;gap:8px}
+.modal-actions button{min-width:80px;padding:7px 18px;border:1px solid #888;background:#eee}
+.modal-actions .primary{background:#0078d4;color:#fff;border-color:#0067b8}
+
+@media(pointer:coarse){
+    .mobile-post-controls,.mobile-boot-controls{display:flex}
+    .post-help{display:none}
+}
+@media(max-width:700px){
+    .rufus{width:88vw}
+    .rufus-body{padding:10px}
+    .bios-content{grid-template-columns:1fr;overflow:auto}
+    .bios-help{display:none}
+    .setup-field{grid-template-columns:170px 1fr}
+    .setup-content h1{font-size:24px}
+    .setup-footer{min-height:55px;padding:7px 25px}
+    #computerManagement{inset:2% 2% 52px}
+    .cm-main{grid-template-columns:150px 1fr}
+    .disk-row{grid-template-columns:110px 1fr}
+    .file-picker-sidebar{width:125px}
+    .file-picker-files{grid-template-columns:repeat(3,1fr);padding:8px}
+    .file-picker-bottom{grid-template-columns:1fr 70px 70px}
+    .file-picker-bottom select{display:none}
+}
+</style>
+</head>
+
+<body>
+
+<div id="rotateScreen">
+    <div class="rotate-box">
+        <div class="rotate-icon">📱</div>
+        <h2>Rotate your phone</h2>
+        <p>This PC lab works best in landscape mode.</p>
+    </div>
+</div>
+
+<!-- STARTING DESKTOP -->
+<section id="desktop" class="screen active desktop-bg">
+
+    <div class="desktop-icons">
+        <div class="desktop-icon" id="thisPcIcon"
+             ondblclick="openComputerManagement()"
+             onclick="selectDesktopIcon(this)">
+            <div class="icon">🖥️</div>
+            This PC
+        </div>
+
+        <div class="desktop-icon">
+            <div class="icon">🗑️</div>
+            Recycle Bin
+        </div>
+    </div>
+
+    <div class="rufus">
+        <div class="titlebar">
+            <span>Rufus 4.9</span>
+            <div class="window-buttons"><span>—</span><span>□</span><span>×</span></div>
+        </div>
+
+        <div class="rufus-body">
+            <div class="rufus-heading">
+                <div class="usb-symbol">▣</div>
+                <h2>Drive Properties</h2>
+            </div>
+
+            <div class="row">
+                <label>Device</label>
+                <select>
+                    <option>Virtual USB Drive (E:) [16 GB]</option>
+                </select>
+            </div>
+
+            <div class="row">
+                <label>Boot selection</label>
+                <div class="control">
+                    <input id="isoField" value="Disk or ISO image (Please select)" readonly>
+                    <button class="select-button" onclick="openISOFilePicker()">SELECT</button>
+                </div>
+            </div>
+
+            <div class="row two">
+                <div>
+                    <label>Partition scheme</label>
+                    <select id="partitionScheme">
+                        <option>GPT</option>
+                        <option>MBR</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Target system</label>
+                    <select id="targetSystem">
+                        <option>UEFI (non CSM)</option>
+                        <option>BIOS (or UEFI-CSM)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row">
+                <label>Volume label</label>
+                <input value="WIN11_24H2">
+            </div>
+
+            <div class="row two">
+                <div>
+                    <label>File system</label>
+                    <select><option>NTFS</option><option>FAT32</option></select>
+                </div>
+                <div>
+                    <label>Cluster size</label>
+                    <select><option>4096 bytes (Default)</option></select>
+                </div>
+            </div>
+
+            <div class="status-area">
+                <div class="status-label" id="rufusStatus">READY</div>
+                <div class="progress">
+                    <div class="progress-bar" id="usbProgress"></div>
+                    <div class="progress-text" id="usbProgressText"></div>
+                </div>
+            </div>
+
+            <div class="rufus-actions">
+                <button>CLOSE</button>
+                <button class="start-button" id="rufusStart" onclick="prepareUSB()">START</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="taskbar">
+        <div class="task-icon">
+            <div class="win-logo"><span></span><span></span><span></span><span></span></div>
+        </div>
+        <div class="task-icon">⌕</div>
+        <div class="task-icon">📁</div>
+        <div class="clock"><span class="clockTime"></span><br><span class="clockDate"></span></div>
+    </div>
+</section>
+
+<!-- THIS PC CONTEXT MENU -->
+<div id="pcContextMenu" class="context-menu">
+    <div class="context-item" onclick="openComputerManagement()">Open</div>
+    <div class="context-separator"></div>
+    <div class="context-item" onclick="openComputerManagement()">Manage</div>
+    <div class="context-item">Pin to Start</div>
+    <div class="context-separator"></div>
+    <div class="context-item">Properties</div>
+</div>
+
+<!-- COMPUTER MANAGEMENT -->
+<div id="computerManagement">
+    <div class="cm-titlebar">
+        <span>Computer Management</span>
+        <button class="cm-close" onclick="closeComputerManagement()">×</button>
+    </div>
+
+    <div class="cm-menu">File Action View Help</div>
+
+    <div class="cm-main">
+        <div class="cm-tree">
+            <div class="tree-title">🖥 Computer Management</div>
+            <div class="tree-item">⌄ System Tools</div>
+            <div class="tree-item tree-child">Task Scheduler</div>
+            <div class="tree-item tree-child">Device Manager</div>
+            <div class="tree-item">⌄ Storage</div>
+            <div class="tree-item tree-child active" onclick="renderDesktopDiskManagement()">
+                Disk Management
+            </div>
+            <div class="tree-item">Services and Applications</div>
+        </div>
+
+        <div class="cm-content">
+            <div class="cm-heading">Disk Management</div>
+            <div class="disk-list" id="desktopDiskList"></div>
+            <div class="cm-status" id="cmStatus">
+                Select a partition or unallocated space.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ISO PICKER -->
+<div id="isoFilePicker" class="file-picker-overlay">
+    <div class="file-picker-window">
+        <div class="file-picker-titlebar">
+            <span>Open</span>
+            <button onclick="closeISOFilePicker()">×</button>
+        </div>
+
+        <div class="file-picker-address">
+            <button onclick="openFolder('Downloads')">←</button>
+            <div id="folderPath">This PC &gt; Downloads</div>
+        </div>
+
+        <div class="file-picker-main">
+            <div class="file-picker-sidebar">
+                <div onclick="openFolder('Desktop')">🖥️ Desktop</div>
+                <div onclick="openFolder('Downloads')">📥 Downloads</div>
+                <div onclick="openFolder('Documents')">📄 Documents</div>
+                <div onclick="openFolder('This PC')">💻 This PC</div>
+            </div>
+            <div class="file-picker-files" id="filePickerFiles"></div>
+        </div>
+
+        <div class="file-picker-bottom">
+            <div class="file-name-area">
+                <label>File name:</label>
+                <input id="selectedISOName" readonly>
+            </div>
+            <select><option>ISO Image (*.iso)</option></select>
+            <button class="file-open-button" onclick="confirmISOSelection()">Open</button>
+            <button onclick="closeISOFilePicker()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- POWER -->
+<section id="powerOff" class="screen">
+    <button class="power-button" onclick="powerOn()">⏻</button>
+    <div class="power-text">Tap to power on</div>
+</section>
+
+<!-- POST -->
+<section id="post" class="screen">
+    <div class="vendor">
+        <div class="vendor-logo">APEX</div>
+        <div class="vendor-model">VIRTUAL COMPUTING SYSTEM</div>
+    </div>
+
+    <div class="post-help">
+        <b>F2</b> Setup &nbsp;&nbsp;&nbsp; <b>F12</b> Boot Menu
+    </div>
+
+    <div class="post-status">Initializing system...</div>
+
+    <div class="mobile-post-controls">
+        <button onclick="openBIOS()">F2<small>Setup</small></button>
+        <button onclick="openBootMenuFromPost()">F12<small>Boot Menu</small></button>
+    </div>
+</section>
+
+<!-- BIOS -->
+<section id="bios" class="screen">
+    <div class="bios-top">APEX UEFI BIOS Utility</div>
+
+    <div class="bios-tabs">
+        <span class="active">Main</span>
+        <span>Advanced</span>
+        <span>Security</span>
+        <span>Boot</span>
+    </div>
+
+    <div class="bios-content">
+        <div class="bios-panel">
+            <div class="bios-row"><span>BIOS Version</span><span>APX.2.14.07</span></div>
+            <div class="bios-row"><span>Processor</span><span>Virtual Core Processor</span></div>
+            <div class="bios-row"><span>Total Memory</span><span>8192 MB</span></div>
+            <div class="bios-row"><span>System Mode</span><span>UEFI</span></div>
+            <div class="bios-row"><span>Secure Boot</span><span>Enabled</span></div>
+            <div class="bios-row"><span>TPM Device</span><span>TPM 2.0 Available</span></div>
+            <div class="bios-row"><span>USB Storage</span><span>Detected</span></div>
+        </div>
+
+        <div class="bios-help">
+            <b>System Information</b><br><br>
+            View hardware and firmware information.<br><br>
+            Press ESC or tap Exit.
+        </div>
+    </div>
+
+    <div class="bios-exit">
+        <button onclick="showScreen('powerOff')">Exit</button>
+    </div>
+</section>
+
+<!-- BOOT MENU -->
+<section id="bootMenu" class="screen">
+    <div class="boot-box">
+        <div class="boot-title">Boot Manager</div>
+        <div class="boot-subtitle">Please select a boot device:</div>
+        <div class="boot-list" id="bootList"></div>
+
+        <div class="boot-footer">
+            PC: ↑ ↓ to select, ENTER to boot<br>
+            Phone: tap a device, then tap BOOT
+        </div>
+
+        <div class="mobile-boot-controls">
+            <button onclick="moveBoot(-1)">▲</button>
+            <button class="boot-now" onclick="selectBootDevice()">BOOT</button>
+            <button onclick="moveBoot(1)">▼</button>
+        </div>
+    </div>
+</section>
+
+<!-- WINDOWS BOOT -->
+<section id="windowsBoot" class="screen">
+    <div class="boot-logo"><span></span><span></span><span></span><span></span></div>
+    <div class="spinner"></div>
+</section>
+
+<!-- LANGUAGE -->
+<section id="setupLanguage" class="screen setup-screen">
+    <div class="setup-window">
+        <div class="setup-content">
+            <div class="setup-brand">
+                <div class="mini-logo"><span></span><span></span><span></span><span></span></div>
+                Windows Setup
+            </div>
+
+            <h1>Windows 11 Setup</h1>
+            <p class="description">Select your language preferences, then click Next.</p>
+
+            <div class="setup-field">
+                <span>Language to install</span>
+                <select><option>English (United States)</option><option>English (India)</option></select>
+            </div>
+
+            <div class="setup-field">
+                <span>Time and currency format</span>
+                <select><option>English (India)</option><option>English (United States)</option></select>
+            </div>
+
+            <div class="setup-field">
+                <span>Keyboard or input method</span>
+                <select><option>US</option></select>
+            </div>
+        </div>
+
+        <div class="setup-footer">
+            <button class="win-button" onclick="showScreen('installNow')">Next</button>
+        </div>
+    </div>
+</section>
+
+<!-- INSTALL NOW -->
+<section id="installNow" class="screen setup-screen">
+    <div class="setup-content install-center">
+        <div class="setup-brand" style="justify-content:center">
+            <div class="mini-logo"><span></span><span></span><span></span><span></span></div>
+            Windows Setup
+        </div>
+
+        <button class="install-now-button" onclick="showScreen('productKey')">
+            Install now
+        </button>
+
+        <div class="repair-text">Repair my PC</div>
+    </div>
+</section>
+
+<!-- PRODUCT KEY -->
+<section id="productKey" class="screen setup-screen">
+    <div class="setup-window">
+        <div class="setup-content">
+            <h1>Activate Windows</h1>
+            <p class="description">Enter a valid Windows product key.</p>
+            <input class="text-input" placeholder="XXXXX-XXXXX-XXXXX-XXXXX-XXXXX">
+
+            <span class="link-button" onclick="showScreen('editionScreen')">
+                I don't have a product key
+            </span>
+        </div>
+
+        <div class="setup-footer">
+            <button class="win-button" onclick="showScreen('editionScreen')">Next</button>
+        </div>
+    </div>
+</section>
+
+<!-- EDITION -->
+<section id="editionScreen" class="screen setup-screen">
+    <div class="setup-window">
+        <div class="setup-content">
+            <h1>Select the operating system you want to install</h1>
+
+            <div class="edition-list">
+                <div class="edition selected">Windows 11 Home</div>
+                <div class="edition">Windows 11 Home N</div>
+                <div class="edition">Windows 11 Pro</div>
+                <div class="edition">Windows 11 Pro N</div>
+                <div class="edition">Windows 11 Education</div>
+            </div>
+        </div>
+
+        <div class="setup-footer">
+            <button class="win-button" onclick="showScreen('installType')">Next</button>
+        </div>
+    </div>
+</section>
+
+<!-- INSTALL TYPE -->
+<section id="installType" class="screen setup-screen">
+    <div class="setup-window">
+        <div class="setup-content">
+            <h1>Which type of installation do you want?</h1>
+
+            <div class="install-option" onclick="upgradeError()">
+                <h3>Upgrade: Install Windows and keep files, settings, and applications</h3>
+                <p>Requires an existing Windows installation.</p>
+            </div>
+
+            <div class="install-option" onclick="openSetupDiskManager()">
+                <h3>Custom: Install Windows only (advanced)</h3>
+                <p>Create, delete and format disk partitions.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- SETUP DISK MANAGEMENT -->
+<section id="diskScreen" class="screen setup-screen">
+    <div class="setup-window">
+        <div class="disk-screen-content">
+            <h1 class="disk-title">Where do you want to install Windows?</h1>
+            <p class="disk-description">
+                This is the same virtual disk you managed from the desktop.
+            </p>
+
+            <div class="disk-table-wrapper">
+                <table class="disk-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Total size</th>
+                            <th>Free space</th>
+                            <th>Type</th>
+                        </tr>
+                    </thead>
+                    <tbody id="diskTableBody"></tbody>
+                </table>
+            </div>
+
+            <div class="disk-toolbar">
+                <button class="disk-tool" onclick="renderSetupDiskTable()">↻ Refresh</button>
+                <button class="disk-tool" onclick="openPartitionModal('setup')">✦ New</button>
+                <button class="disk-tool" onclick="deleteSelectedPartition()">✕ Delete</button>
+                <button class="disk-tool" onclick="formatSelectedPartition()">▣ Format</button>
+            </div>
+
+            <div class="disk-info" id="diskInfo">Select a disk entry.</div>
+            <div class="install-target" id="installTarget">No installation target selected.</div>
+        </div>
+
+        <div class="setup-footer">
+            <button class="win-button" onclick="beginInstallation()">Next</button>
+        </div>
+    </div>
+</section>
+
+<!-- INSTALLING -->
+<section id="installing" class="screen setup-screen">
+    <div class="setup-content">
+        <h1>Installing Windows</h1>
+        <p class="description">Your computer will restart several times.</p>
+
+        <div class="install-progress-list">
+            <div class="install-stage active" id="stage1"><span class="check">•</span>Copying Windows files</div>
+            <div class="install-stage" id="stage2"><span class="check">•</span>Getting files ready for installation</div>
+            <div class="install-stage" id="stage3"><span class="check">•</span>Installing features</div>
+            <div class="install-stage" id="stage4"><span class="check">•</span>Installing updates</div>
+            <div class="install-stage" id="stage5"><span class="check">•</span>Finishing up</div>
+        </div>
+
+        <div class="install-percent" id="installPercent">0%</div>
+    </div>
+</section>
+
+<!-- RESTART -->
+<section id="restart" class="screen">
+    <h2>Windows needs to restart to continue</h2>
+    <p id="restartText">Restarting in 5 seconds</p>
+</section>
+
+<!-- OOBE -->
+<section id="oobe" class="screen">
+    <div class="oobe-card">
+        <div class="oobe-logo"><span></span><span></span><span></span><span></span></div>
+        <h1>Is this the right country or region?</h1>
+        <p>Select your country or region.</p>
+
+        <select class="oobe-select">
+            <option>India</option>
+            <option>United States</option>
+            <option>United Kingdom</option>
+            <option>Japan</option>
+        </select>
+
+        <button class="oobe-button" onclick="finishSetup()">Yes</button>
+    </div>
+</section>
+
+<!-- FINAL DESKTOP -->
+<section id="finalDesktop" class="screen desktop-bg">
+    <div class="desktop-icons">
+        <div class="desktop-icon"
+             ondblclick="openComputerManagement()"
+             onclick="selectDesktopIcon(this)">
+            <div class="icon">🖥️</div>
+            This PC
+        </div>
+
+        <div class="desktop-icon">
+            <div class="icon">🗑️</div>
+            Recycle Bin
+        </div>
+    </div>
+
+    <div class="final-message">
+        <h3>Installation complete</h3>
+        <p>Windows 11 was successfully installed. Open This PC → Manage to inspect the final disk layout.</p>
+    </div>
+
+    <div class="taskbar">
+        <div class="task-icon">
+            <div class="win-logo"><span></span><span></span><span></span><span></span></div>
+        </div>
+        <div class="task-icon">⌕</div>
+        <div class="task-icon">📁</div>
+        <div class="clock"><span class="clockTime"></span><br><span class="clockDate"></span></div>
+    </div>
+</section>
+
+<!-- WARNING MODAL -->
+<div id="warningModal" class="modal">
+    <div class="modal-box">
+        <div class="modal-title">Rufus</div>
+        <div class="modal-body">
+            <b>WARNING: ALL DATA ON DEVICE WILL BE DESTROYED.</b><br><br>
+            To continue, click OK.
+        </div>
+        <div class="modal-actions">
+            <button onclick="closeModal('warningModal')">Cancel</button>
+            <button class="primary" onclick="startUSBWriting()">OK</button>
+        </div>
+    </div>
+</div>
+
+<!-- PARTITION MODAL -->
+<div id="partitionModal" class="modal">
+    <div class="modal-box">
+        <div class="modal-title" id="partitionModalTitle">Create Partition</div>
+        <div class="modal-body">
+            <label>Partition size in MB:</label>
+            <input type="number" id="partitionSizeInput" min="1">
+            <div class="modal-note">
+                Maximum available:
+                <span id="maxPartitionSize">0</span> MB
+            </div>
+        </div>
+
+        <div class="modal-actions">
+            <button onclick="closeModal('partitionModal')">Cancel</button>
+            <button class="primary" onclick="createPartition()">Apply</button>
+        </div>
+    </div>
+</div>
+
+<script>
+/* =====================================================
+   STATE
+===================================================== */
+
+const state={
+    isoSelected:false,
+    usbReady:false,
+    postActive:false,
+    bootIndex:0,
+    selectedDiskId:null,
+    installPartitionId:null,
+    partitionSource:"desktop",
+    windowsInstalled:false
+};
+
+let postTimer=null;
+let selectedISOFile=null;
+
+/* =====================================================
+   SHARED VIRTUAL DISK MODEL
+===================================================== */
+
+let diskEntries=[
+    {
+        id:"disk0-unallocated",
+        drive:0,
+        name:"Drive 0 Unallocated Space",
+        label:"Unallocated",
+        size:262144,
+        free:262144,
+        type:"Unallocated Space",
+        kind:"unallocated",
+        formatted:false
+    },
+    {
+        id:"usb",
+        drive:1,
+        name:"Drive 1 Partition 1",
+        label:"Virtual USB",
+        size:16384,
+        free:16384,
+        type:"Removable",
+        kind:"usb",
+        formatted:false
+    }
+];
+
+/* =====================================================
+   BASIC HELPERS
+===================================================== */
+
+function showScreen(id){
+    document.querySelectorAll(".screen").forEach(screen=>{
+        screen.classList.remove("active");
+    });
+
+    document.getElementById(id).classList.add("active");
+}
+
+function openModal(id){
+    document.getElementById(id).classList.add("show");
+}
+
+function closeModal(id){
+    document.getElementById(id).classList.remove("show");
+}
+
+function formatMB(mb){
+    if(mb>=1024){
+        return (mb/1024).toFixed(1)+" GB";
+    }
+
+    return Math.round(mb)+" MB";
+}
+
+function getSelectedDiskEntry(){
+    return diskEntries.find(entry=>entry.id===state.selectedDiskId);
+}
+
+function updateClock(){
+    const now=new Date();
+
+    document.querySelectorAll(".clockTime").forEach(el=>{
+        el.textContent=now.toLocaleTimeString([],{
+            hour:"2-digit",
+            minute:"2-digit"
+        });
+    });
+
+    document.querySelectorAll(".clockDate").forEach(el=>{
+        el.textContent=now.toLocaleDateString();
+    });
+}
+
+updateClock();
+setInterval(updateClock,1000);
+
+/* =====================================================
+   DESKTOP THIS PC
+===================================================== */
+
+function selectDesktopIcon(icon){
+    document.querySelectorAll(".desktop-icon").forEach(item=>{
+        item.style.background="";
+    });
+
+    icon.style.background="rgba(255,255,255,.15)";
+}
+
+document.getElementById("thisPcIcon").addEventListener("contextmenu",event=>{
+    event.preventDefault();
+
+    const menu=document.getElementById("pcContextMenu");
+
+    menu.style.left=Math.min(event.clientX,window.innerWidth-200)+"px";
+    menu.style.top=Math.min(event.clientY,window.innerHeight-180)+"px";
+    menu.classList.add("show");
+});
+
+document.addEventListener("click",event=>{
+    if(!event.target.closest("#pcContextMenu")){
+        document.getElementById("pcContextMenu").classList.remove("show");
+    }
+});
+
+function openComputerManagement(){
+    document.getElementById("pcContextMenu").classList.remove("show");
+    document.getElementById("computerManagement").classList.add("show");
+    renderDesktopDiskManagement();
+}
+
+function closeComputerManagement(){
+    document.getElementById("computerManagement").classList.remove("show");
+}
+
+/* =====================================================
+   DESKTOP DISK MANAGEMENT
+===================================================== */
+
+function renderDesktopDiskManagement(){
+    const container=document.getElementById("desktopDiskList");
+    container.innerHTML="";
+
+    [0,1].forEach(driveNumber=>{
+        const entries=diskEntries.filter(entry=>entry.drive===driveNumber);
+
+        if(entries.length===0)return;
+
+        const total=entries.reduce((sum,entry)=>sum+entry.size,0);
+
+        const row=document.createElement("div");
+        row.className="disk-row";
+
+        const label=document.createElement("div");
+        label.className="disk-label";
+
+        label.innerHTML=`
+            <strong>Disk ${driveNumber}</strong>
+            ${driveNumber===0 ? "Basic" : "Removable"}<br>
+            ${formatMB(total)}<br>
+            Online
+        `;
+
+        const visual=document.createElement("div");
+        visual.className="disk-visual";
+
+        entries.forEach(entry=>{
+            const block=document.createElement("div");
+
+            block.className=
+                "volume-block "+
+                (entry.kind==="unallocated" ? "unallocated" : "");
+
+            if(entry.id===state.selectedDiskId){
+                block.classList.add("selected");
+            }
+
+            const width=Math.max(
+                90,
+                (entry.size/total)*650
+            );
+
+            block.style.width=width+"px";
+
+            block.innerHTML=`
+                <div class="volume-name">${entry.label}</div>
+                <div>${formatMB(entry.size)}</div>
+                <div>${entry.type}</div>
+                <div>${entry.formatted ? "Healthy" : ""}</div>
+            `;
+
+            block.onclick=()=>{
+                state.selectedDiskId=entry.id;
+                renderDesktopDiskManagement();
+
+                document.getElementById("cmStatus").textContent=
+                    entry.kind==="unallocated"
+                    ? "Unallocated space selected. Double-click to create a New Simple Volume."
+                    : entry.label+" selected.";
+            };
+
+            block.ondblclick=()=>{
+                state.selectedDiskId=entry.id;
+
+                if(entry.kind==="unallocated"){
+                    openPartitionModal("desktop");
+                }
+            };
+
+            block.oncontextmenu=event=>{
+                event.preventDefault();
+
+                state.selectedDiskId=entry.id;
+                renderDesktopDiskManagement();
+
+                if(entry.kind==="unallocated"){
+                    if(confirm("Create a New Simple Volume in this unallocated space?")){
+                        openPartitionModal("desktop");
+                    }
+                }
+                else if(entry.kind==="primary"){
+                    const action=prompt(
+                        "Disk Management\n\n"+
+                        "Type:\n"+
+                        "FORMAT - Format volume\n"+
+                        "DELETE - Delete volume"
+                    );
+
+                    if(!action)return;
+
+                    if(action.toUpperCase()==="FORMAT"){
+                        formatSelectedPartition();
+                    }
+
+                    if(action.toUpperCase()==="DELETE"){
+                        deleteSelectedPartition();
+                    }
+                }
+            };
+
+            visual.appendChild(block);
+        });
+
+        row.appendChild(label);
+        row.appendChild(visual);
+        container.appendChild(row);
+    });
+}
+
+/* =====================================================
+   ISO PICKER
+===================================================== */
+
+const virtualFiles={
+    Downloads:[
+        {
+            name:"Win11_24H2_English_x64.iso",
+            type:"iso",
+            size:"5.4 GB"
+        },
+        {
+            name:"college_notes.pdf",
+            type:"pdf",
+            size:"2.1 MB"
+        },
+        {
+            name:"setup.exe",
+            type:"exe",
+            size:"4.8 MB"
+        }
+    ],
+    Desktop:[
+        {
+            name:"Projects",
+            type:"folder",
+            size:""
+        }
+    ],
+    Documents:[
+        {
+            name:"assignment.docx",
+            type:"document",
+            size:"74 KB"
+        }
+    ],
+    "This PC":[
+        {
+            name:"Local Disk",
+            type:"drive",
+            size:"256 GB"
+        },
+        {
+            name:"Virtual USB Drive",
+            type:"drive",
+            size:"16 GB"
+        }
+    ]
+};
+
+function openISOFilePicker(){
+    selectedISOFile=null;
+    document.getElementById("selectedISOName").value="";
+    document.getElementById("isoFilePicker").classList.add("show");
+    openFolder("Downloads");
+}
+
+function closeISOFilePicker(){
+    document.getElementById("isoFilePicker").classList.remove("show");
+}
+
+function openFolder(folder){
+    document.getElementById("folderPath").textContent=
+        folder==="This PC"
+        ? "This PC"
+        : "This PC > "+folder;
+
+    selectedISOFile=null;
+    document.getElementById("selectedISOName").value="";
+
+    const container=document.getElementById("filePickerFiles");
+    container.innerHTML="";
+
+    const icons={
+        iso:"💿",
+        pdf:"📕",
+        exe:"⚙️",
+        folder:"📁",
+        document:"📘",
+        drive:"💽"
+    };
+
+    (virtualFiles[folder]||[]).forEach(file=>{
+        const item=document.createElement("div");
+        item.className="file-item";
+
+        item.innerHTML=`
+            <div class="file-icon">${icons[file.type]||"📄"}</div>
+            <div>${file.name}</div>
+            <div class="file-size">${file.size}</div>
+        `;
+
+        item.onclick=()=>{
+            document.querySelectorAll(".file-item").forEach(element=>{
+                element.classList.remove("selected");
+            });
+
+            item.classList.add("selected");
+            selectedISOFile=file;
+            document.getElementById("selectedISOName").value=file.name;
+        };
+
+        item.ondblclick=()=>{
+            selectedISOFile=file;
+
+            if(file.type==="iso"){
+                confirmISOSelection();
+            }
+        };
+
+        container.appendChild(item);
+    });
+}
+
+function confirmISOSelection(){
+    if(!selectedISOFile){
+        alert("Select an ISO image first.");
+        return;
+    }
+
+    if(selectedISOFile.type!=="iso"){
+        alert("The selected file is not an ISO image.");
+        return;
+    }
+
+    state.isoSelected=true;
+
+    document.getElementById("isoField").value=selectedISOFile.name;
+    document.getElementById("rufusStatus").textContent="READY";
+
+    closeISOFilePicker();
+}
+
+/* =====================================================
+   RUFUS
+===================================================== */
+
+function prepareUSB(){
+    if(!state.isoSelected){
+        alert("Please select a Windows 11 ISO image first.");
+        return;
+    }
+
+    if(
+        document.getElementById("partitionScheme").value!=="GPT" ||
+        document.getElementById("targetSystem").value!=="UEFI (non CSM)"
+    ){
+        alert("Incorrect configuration.\n\nUse GPT with UEFI (non CSM).");
+        return;
+    }
+
+    openModal("warningModal");
+}
+
+function startUSBWriting(){
+    closeModal("warningModal");
+
+    const button=document.getElementById("rufusStart");
+    const bar=document.getElementById("usbProgress");
+    const text=document.getElementById("usbProgressText");
+    const status=document.getElementById("rufusStatus");
+
+    button.disabled=true;
+
+    let progress=0;
+
+    const timer=setInterval(()=>{
+        progress=Math.min(
+            100,
+            progress+Math.floor(Math.random()*5)+1
+        );
+
+        bar.style.width=progress+"%";
+        text.textContent=progress+"%";
+
+        if(progress<15){
+            status.textContent="Formatting Virtual USB Drive...";
+        }
+        else if(progress<65){
+            status.textContent="Copying Windows installation files...";
+        }
+        else if(progress<90){
+            status.textContent="Installing UEFI boot files...";
+        }
+        else{
+            status.textContent="Finalizing...";
+        }
+
+        if(progress>=100){
+            clearInterval(timer);
+
+            state.usbReady=true;
+
+            const usb=diskEntries.find(entry=>entry.kind==="usb");
+
+            usb.label="WIN11_24H2";
+            usb.name="Drive 1 Partition 1: WIN11_24H2";
+            usb.type="Primary";
+            usb.formatted=true;
+            usb.free=8396;
+
+            status.textContent="READY";
+            text.textContent="";
+            button.textContent="READY";
+
+            renderDesktopDiskManagement();
+
+            setTimeout(()=>{
+                closeComputerManagement();
+                showScreen("powerOff");
+            },1000);
+        }
+    },80);
+}
+
+/* =====================================================
+   POWER + POST
+===================================================== */
+
+function powerOn(){
+    showScreen("post");
+
+    state.postActive=true;
+
+    clearTimeout(postTimer);
+
+    postTimer=setTimeout(()=>{
+        if(state.postActive){
+            state.postActive=false;
+            showScreen("powerOff");
+
+            alert(
+                "No operating system found on the internal SSD.\n\n"+
+                "Power on again and press F12 to open the Boot Menu."
+            );
+        }
+    },8000);
+}
+
+function openBootMenuFromPost(){
+    if(!state.postActive)return;
+
+    clearTimeout(postTimer);
+    state.postActive=false;
+
+    openBootMenu();
+}
+
+function openBIOS(){
+    clearTimeout(postTimer);
+    state.postActive=false;
+    showScreen("bios");
+}
+
+/* =====================================================
+   BOOT MENU
+===================================================== */
+
+function getBootDevices(){
+    const devices=[
+        {
+            name:"Windows Boot Manager (NVMe SSD)",
+            type:"ssd"
+        }
+    ];
+
+    if(state.usbReady){
+        devices.push({
+            name:"UEFI: Virtual USB Drive 16 GB",
+            type:"usb"
+        });
+    }
+
+    devices.push({
+        name:"UEFI: PXE Network",
+        type:"network"
+    });
+
+    return devices;
+}
+
+function openBootMenu(){
+    state.bootIndex=0;
+    showScreen("bootMenu");
+    renderBootMenu();
+}
+
+function renderBootMenu(){
+    const list=document.getElementById("bootList");
+    const devices=getBootDevices();
+
+    list.innerHTML="";
+
+    devices.forEach((device,index)=>{
+        const option=document.createElement("div");
+
+        option.className=
+            "boot-option"+
+            (index===state.bootIndex ? " selected" : "");
+
+        option.textContent=device.name;
+
+        option.onclick=()=>{
+            state.bootIndex=index;
+            renderBootMenu();
+        };
+
+        option.ondblclick=()=>{
+            state.bootIndex=index;
+            selectBootDevice();
+        };
+
+        list.appendChild(option);
+    });
+}
+
+function moveBoot(direction){
+    const devices=getBootDevices();
+
+    state.bootIndex=
+        (state.bootIndex+direction+devices.length)%devices.length;
+
+    renderBootMenu();
+}
+
+function selectBootDevice(){
+    const device=getBootDevices()[state.bootIndex];
+
+    if(device.type==="usb"){
+        bootInstaller();
+        return;
+    }
+
+    if(device.type==="ssd"){
+        if(state.windowsInstalled){
+            showScreen("windowsBoot");
+
+            setTimeout(()=>{
+                showScreen("finalDesktop");
+            },2500);
+
+            return;
+        }
+
+        alert(
+            "No operating system found on the internal SSD.\n\n"+
+            "Select the UEFI Virtual USB Drive."
+        );
+
+        return;
+    }
+
+    alert(
+        "PXE-E61: Media test failure.\n\n"+
+        "Network boot failed."
+    );
+}
+
+function bootInstaller(){
+    showScreen("windowsBoot");
+
+    setTimeout(()=>{
+        showScreen("setupLanguage");
+    },3000);
+}
+
+/* =====================================================
+   KEYBOARD
+===================================================== */
+
+document.addEventListener("keydown",event=>{
+    if(state.postActive && event.key==="F12"){
+        event.preventDefault();
+        openBootMenuFromPost();
+        return;
+    }
+
+    if(state.postActive && event.key==="F2"){
+        event.preventDefault();
+        openBIOS();
+        return;
+    }
+
+    if(document.getElementById("bootMenu").classList.contains("active")){
+        if(event.key==="ArrowUp"){
+            event.preventDefault();
+            moveBoot(-1);
+        }
+
+        if(event.key==="ArrowDown"){
+            event.preventDefault();
+            moveBoot(1);
+        }
+
+        if(event.key==="Enter"){
+            event.preventDefault();
+            selectBootDevice();
+        }
+    }
+});
+
+/* =====================================================
+   EDITION
+===================================================== */
+
+document.querySelectorAll(".edition").forEach(edition=>{
+    edition.onclick=()=>{
+        document.querySelectorAll(".edition").forEach(item=>{
+            item.classList.remove("selected");
+        });
+
+        edition.classList.add("selected");
+    };
+});
+
+function upgradeError(){
+    alert(
+        "The Upgrade option isn't available.\n\n"+
+        "You started the PC using Windows installation media.\n\n"+
+        "Choose Custom: Install Windows only (advanced)."
+    );
+}
+
+/* =====================================================
+   SHARED PARTITION CREATION
+===================================================== */
+
+function openPartitionModal(source){
+    const selected=getSelectedDiskEntry();
+
+    if(!selected || selected.kind!=="unallocated"){
+        alert("Select unallocated space first.");
+        return;
+    }
+
+    state.partitionSource=source;
+
+    document.getElementById("maxPartitionSize").textContent=
+        Math.floor(selected.size);
+
+    document.getElementById("partitionSizeInput").max=
+        Math.floor(selected.size);
+
+    document.getElementById("partitionSizeInput").value=
+        Math.floor(selected.size);
+
+    document.getElementById("partitionModalTitle").textContent=
+        source==="desktop"
+        ? "New Simple Volume"
+        : "Windows Setup";
+
+    openModal("partitionModal");
+}
+
+function createPartition(){
+    const selected=getSelectedDiskEntry();
+    const requested=Number(
+        document.getElementById("partitionSizeInput").value
+    );
+
+    if(!selected || selected.kind!=="unallocated"){
+        closeModal("partitionModal");
+        return;
+    }
+
+    if(!requested || requested<1 || requested>selected.size){
+        alert("Enter a valid partition size.");
+        return;
+    }
+
+    const index=diskEntries.indexOf(selected);
+    const replacements=[];
+
+    let usable=requested;
+
+    const systemExists=diskEntries.some(entry=>entry.kind==="efi");
+
+    if(!systemExists && state.partitionSource==="setup"){
+        if(selected.size<116){
+            alert("Not enough space to create system partitions.");
+            return;
+        }
+
+        replacements.push({
+            id:"efi-"+Date.now(),
+            drive:0,
+            name:"Drive 0 Partition 1: System",
+            label:"System",
+            size:100,
+            free:70,
+            type:"System",
+            kind:"efi",
+            formatted:true
+        });
+
+        replacements.push({
+            id:"msr-"+Date.now(),
+            drive:0,
+            name:"Drive 0 Partition 2: MSR (Reserved)",
+            label:"MSR",
+            size:16,
+            free:16,
+            type:"MSR (Reserved)",
+            kind:"msr",
+            formatted:true
+        });
+
+        usable=Math.min(requested,selected.size-116);
+    }
+
+    if(usable<1){
+        alert("Not enough usable space.");
+        return;
+    }
+
+    const primary={
+        id:"primary-"+Date.now(),
+        drive:0,
+        name:"Drive 0 Primary Partition",
+        label:
+            state.partitionSource==="desktop"
+            ? "New Volume"
+            : "Primary",
+        size:usable,
+        free:usable,
+        type:"Primary",
+        kind:"primary",
+        formatted:
+            state.partitionSource==="desktop"
+    };
+
+    replacements.push(primary);
+
+    const used=
+        usable+
+        replacements
+            .filter(entry=>entry.kind==="efi" || entry.kind==="msr")
+            .reduce((sum,entry)=>sum+entry.size,0);
+
+    const remaining=selected.size-used;
+
+    if(remaining>0){
+        replacements.push({
+            id:"unallocated-"+Date.now(),
+            drive:0,
+            name:"Drive 0 Unallocated Space",
+            label:"Unallocated",
+            size:remaining,
+            free:remaining,
+            type:"Unallocated Space",
+            kind:"unallocated",
+            formatted:false
+        });
+    }
+
+    diskEntries.splice(index,1,...replacements);
+
+    state.selectedDiskId=primary.id;
+    state.installPartitionId=primary.id;
+
+    closeModal("partitionModal");
+
+    renderDesktopDiskManagement();
+    renderSetupDiskTable();
+}
+
+/* =====================================================
+   DELETE + FORMAT
+===================================================== */
+
+function deleteSelectedPartition(){
+    const selected=getSelectedDiskEntry();
+
+    if(!selected){
+        alert("Select a partition first.");
+        return;
+    }
+
+    if(selected.kind==="usb"){
+        alert("The installation USB cannot be deleted here.");
+        return;
+    }
+
+    if(selected.kind==="unallocated"){
+        alert("Unallocated space cannot be deleted.");
+        return;
+    }
+
+    if(!confirm(
+        "Delete this partition?\n\n"+
+        "All data on the partition will be lost."
+    )){
+        return;
+    }
+
+    const index=diskEntries.indexOf(selected);
+
+    diskEntries.splice(index,1,{
+        id:"unallocated-"+Date.now(),
+        drive:0,
+        name:"Drive 0 Unallocated Space",
+        label:"Unallocated",
+        size:selected.size,
+        free:selected.size,
+        type:"Unallocated Space",
+        kind:"unallocated",
+        formatted:false
+    });
+
+    if(state.installPartitionId===selected.id){
+        state.installPartitionId=null;
+    }
+
+    state.selectedDiskId=null;
+
+    mergeAdjacentUnallocated();
+    renderDesktopDiskManagement();
+    renderSetupDiskTable();
+}
+
+function mergeAdjacentUnallocated(){
+    const output=[];
+
+    diskEntries.forEach(entry=>{
+        const previous=output[output.length-1];
+
+        if(
+            previous &&
+            previous.drive===entry.drive &&
+            previous.kind==="unallocated" &&
+            entry.kind==="unallocated"
+        ){
+            previous.size+=entry.size;
+            previous.free+=entry.free;
+        }
+        else{
+            output.push(entry);
+        }
+    });
+
+    diskEntries=output;
+}
+
+function formatSelectedPartition(){
+    const selected=getSelectedDiskEntry();
+
+    if(!selected || selected.kind!=="primary"){
+        alert("Select a primary partition first.");
+        return;
+    }
+
+    if(!confirm(
+        "Format this partition?\n\n"+
+        "All data on the partition will be lost."
+    )){
+        return;
+    }
+
+    selected.formatted=true;
+    selected.free=Math.max(0,selected.size-120);
+    selected.label=
+        selected.label==="New Volume"
+        ? "New Volume"
+        : "Primary";
+
+    state.installPartitionId=selected.id;
+
+    renderDesktopDiskManagement();
+    renderSetupDiskTable();
+}
+
+/* =====================================================
+   WINDOWS SETUP DISK TABLE
+===================================================== */
+
+function openSetupDiskManager(){
+    showScreen("diskScreen");
+    renderSetupDiskTable();
+}
+
+function renderSetupDiskTable(){
+    const body=document.getElementById("diskTableBody");
+
+    if(!body)return;
+
+    body.innerHTML="";
+
+    diskEntries.forEach(entry=>{
+        const row=document.createElement("tr");
+
+        if(entry.id===state.selectedDiskId){
+            row.classList.add("selected");
+        }
+
+        row.innerHTML=`
+            <td>${entry.name}</td>
+            <td>${formatMB(entry.size)}</td>
+            <td>${formatMB(entry.free)}</td>
+            <td>${entry.type}</td>
+        `;
+
+        row.onclick=()=>{
+            state.selectedDiskId=entry.id;
+
+            if(entry.kind==="primary"){
+                state.installPartitionId=entry.id;
+            }
+
+            renderSetupDiskTable();
+        };
+
+        body.appendChild(row);
+    });
+
+    updateSetupDiskInfo();
+}
+
+function updateSetupDiskInfo(){
+    const selected=getSelectedDiskEntry();
+
+    const info=document.getElementById("diskInfo");
+    const target=document.getElementById("installTarget");
+
+    if(!selected){
+        info.textContent="Select a disk entry.";
+    }
+    else if(selected.kind==="unallocated"){
+        info.textContent=
+            "Unallocated disk space. Select New to create a partition.";
+    }
+    else if(selected.kind==="usb"){
+        info.textContent=
+            "Windows installation media. Windows cannot be installed here.";
+    }
+    else if(selected.kind==="efi"){
+        info.textContent=
+            "EFI System Partition. Stores UEFI boot files.";
+    }
+    else if(selected.kind==="msr"){
+        info.textContent=
+            "Microsoft Reserved Partition.";
+    }
+    else{
+        info.textContent=
+            selected.formatted
+            ? "Primary partition. Ready for Windows installation."
+            : "Primary partition. Format it before installing Windows.";
+    }
+
+    const installEntry=diskEntries.find(
+        entry=>entry.id===state.installPartitionId
+    );
+
+    target.textContent=
+        installEntry
+        ? "Installation target: "+installEntry.name
+        : "No valid installation target selected.";
+}
+
+/* =====================================================
+   INSTALL WINDOWS
+===================================================== */
+
+function beginInstallation(){
+    const target=diskEntries.find(
+        entry=>entry.id===state.installPartitionId
+    );
+
+    if(!target || target.kind!=="primary"){
+        alert("Create and select a primary partition first.");
+        return;
+    }
+
+    if(!target.formatted){
+        alert("Format the selected primary partition before continuing.");
+        return;
+    }
+
+    showScreen("installing");
+
+    let progress=0;
+
+    const stages=[
+        document.getElementById("stage1"),
+        document.getElementById("stage2"),
+        document.getElementById("stage3"),
+        document.getElementById("stage4"),
+        document.getElementById("stage5")
+    ];
+
+    const timer=setInterval(()=>{
+        progress++;
+
+        document.getElementById("installPercent").textContent=
+            progress+"%";
+
+        let active=0;
+
+        if(progress>=20)active=1;
+        if(progress>=65)active=2;
+        if(progress>=78)active=3;
+        if(progress>=90)active=4;
+
+        stages.forEach((stage,index)=>{
+            stage.classList.remove("active","done");
+
+            const check=stage.querySelector(".check");
+
+            if(index<active){
+                stage.classList.add("done");
+                check.textContent="✓";
+            }
+            else if(index===active){
+                stage.classList.add("active");
+                check.textContent="•";
+            }
+            else{
+                check.textContent="•";
+            }
+        });
+
+        if(progress>=100){
+            clearInterval(timer);
+
+            stages[4].classList.remove("active");
+            stages[4].classList.add("done");
+            stages[4].querySelector(".check").textContent="✓";
+
+            target.label="Windows (C:)";
+            target.name="Drive 0 Partition: Windows";
+            target.free=Math.max(0,target.size-32000);
+
+            state.windowsInstalled=true;
+
+            setTimeout(restartSequence,800);
+        }
+    },80);
+}
+
+function restartSequence(){
+    showScreen("restart");
+
+    let count=5;
+
+    document.getElementById("restartText").textContent=
+        "Restarting in "+count+" seconds";
+
+    const timer=setInterval(()=>{
+        count--;
+
+        document.getElementById("restartText").textContent=
+            "Restarting in "+count+" seconds";
+
+        if(count<=0){
+            clearInterval(timer);
+
+            showScreen("windowsBoot");
+
+            setTimeout(()=>{
+                showScreen("oobe");
+            },3000);
+        }
+    },1000);
+}
+
+function finishSetup(){
+    showScreen("windowsBoot");
+
+    setTimeout(()=>{
+        showScreen("finalDesktop");
+        renderDesktopDiskManagement();
+    },2500);
+}
+</script>
+
+</body>
+</html>
